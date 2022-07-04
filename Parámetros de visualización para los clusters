@@ -1,0 +1,2 @@
+var estilo = {"opacity":1,"bands":["B4_mean","B3_mean","B2_mean"],"min":0.014402907523911268,"max":0.16399396876345862,"gamma":1},
+    imageVisParam5 = {"opacity":1,"bands":["cluster"],"palette":["68fff1","3c2fff","fcff25","73ff1b","0aff33","ff0af7","ff1295","e8caff","afffff","ff8dc2"]};

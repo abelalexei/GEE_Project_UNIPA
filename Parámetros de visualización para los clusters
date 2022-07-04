@@ -11,9 +11,9 @@ var AOI =
           [-89.07010686395093, 13.695511805297132],
           [-88.99869573113843, 13.695511805297132],
           [-88.99869573113843, 13.750376226473056]]], null, false),
+    estilo = {"opacity":1,"bands":["B4_mean","B3_mean","B2_mean"],"min":0.014402907523911268,"max":0.16399396876345862,"gamma":1},
+    imageVisParam5 = {"opacity":1,"bands":["cluster"],"palette":["68fff1","3c2fff","fcff25","73ff1b","0aff33","ff0af7","ff1295","e8caff","afffff","ff8dc2"]},
     imageVisParam = {"opacity":1,"bands":["B4"],"palette":["df923d","f1b555","fcd163","99b718","74a901"]},
     imageVisParam2 = {"opacity":1,"bands":["B4","B4","B4"],"gamma":1.0510000000000002},
     imageVisParam3 = {"opacity":1,"bands":["B4"],"max":0.5,"palette":["ffffff","ce7e45","df923d","f1b555","fcd163","99b718","74a901","66a000","529400","3e8601","207401","056201","004c00","023b01","012e01","011d01","011301"]},
-    imageVisParam4 = {"opacity":1,"bands":["B8","B8","B8"],"min":0.4,"max":0.6,"gamma":1},
-    estilo = {"opacity":1,"bands":["B4_mean","B3_mean","B2_mean"],"min":0.014402907523911268,"max":0.16399396876345862,"gamma":1},
-    imageVisParam5 = {"opacity":1,"bands":["cluster"],"palette":["68fff1","3c2fff","fcff25","73ff1b","0aff33","ff0af7","ff1295","e8caff","afffff","ff8dc2"]};
+    imageVisParam4 = {"opacity":1,"bands":["B8","B8","B8"],"min":0.4,"max":0.6,"gamma":1};

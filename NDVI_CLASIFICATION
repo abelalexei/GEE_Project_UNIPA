@@ -1,0 +1,190 @@
+/*El objetivo de desarrollar este proyecto es que realize
+una clasificación supervisada de una imagen Sentinel 2 de tipo
+de tipo 2A "Bottom-Of-Atmosphere reflectances in cartographic geometry"
+esto permitira crear una zonificación inicial de zonas de afectación de
+deslizamientos basándose en la firma espectral generada por la ocurrencia
+de este fenómeno al mismo tiempo el código hará un análisis de los valores
+de NDVI en la zonificación delimitada.
+
+ * ---------------Code from https://developers.google.com/----------------
+ * El objetivo del siguiente bloque es configurar la imagen que se desea utilizar
+ * aplicando algunos filtros para limpiarla de nubes y además escoger la fecha de
+ * interés del análisis, en el caso del proyecto la fecha de ocurrencia del evento
+ * desencadenante de los deslizamientos es el 29 del 6 de 2020.
+  */
+  
+  
+//----------------Dataset Sentinel 2A Bottom-Of-Atmosphere -----------------
+//@param {ee.Image} image Sentinel-2 image
+//@return {ee.Image} cloud masked Sentinel-2 image
+/*El objetivo de desarrollar este proyecto es que realize
+una clasificación no supervisada de una imagen Sentinel 2 de tipo
+de tipo 2A "Bottom-Of-Atmosphere reflectances in cartographic geometry"
+esto permitira crear una zonificación inicial de zonas de afectación de
+deslizamientos basándose en la firma espectral generada por la ocurrencia
+de este fenómeno al mismo tiempo el código hará un análisis de los valores
+de NDVI en la zonificación delimitada.
+
+ * ---------------Code from https://developers.google.com/----------------
+ * El objetivo del siguiente bloque es configurar la imagen que se desea utilizar
+ * aplicando algunos filtros para limpiarla de nubes y además escoger la fecha de
+ * interés del análisis, en el caso del proyecto la fecha de ocurrencia del evento
+ * desencadenante de los deslizamientos es el 29 del 6 de 2020.
+  */
+//----------------Dataset Sentinel 2A Bottom-Of-Atmosphere -----------------
+//@param {ee.Image} image Sentinel-2 image
+//@return {ee.Image} cloud masked Sentinel-2 image
+
+
+//Parte I, Obtensión de la imagen y cálculo de NDVI
+//________________________________________________________________________
+//________________________________________________________________________
+//La variable "dataset" es la imagen sin filtro 
+ var dataset_original = ee.ImageCollection('COPERNICUS/S2_SR')
+                  .filterDate('2020-06-25', '2020-08-30')
+                  .filterBounds(AOI)
+                  
+//La variable "dataset_filtrada" es la imagen filtrada con un porcentaje de nubes de 20%
+ var dataset_filtrada = dataset_original.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',20))
+                  .map(maskS2clouds);
+                  
+//* Function to mask clouds using the Sentinel-2 QA band
+function maskS2clouds(image) {
+  var qa = image.select('QA60');
+
+  // Bits 10 and 11 are clouds and cirrus, respectively.
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+
+  // Both flags should be set to zero, indicating clear conditions.
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  return image.updateMask(mask).divide(10000);
+}
+
+var dataset_median_clip = ee.ImageCollection(dataset_original).median().clip(AOI)
+var dataset_filtrada_median_clip = ee.ImageCollection(dataset_filtrada).median().clip(AOI)
+
+
+
+//calculate NDVI
+var nir = dataset_filtrada_median_clip.select ('B8');
+var r = dataset_filtrada_median_clip.select ('B4');
+//El código de arriba hace un recorte de las bandas necesarias para el
+//cálculo del NDVI utilizando la variable dataset_clip
+var ndvi = (nir.subtract(r)).divide(nir.add(r));
+//El código de arriba hace una resta de la banda de infrarrojo cercano menos
+//la banda roja utilizando el comando .substract apicable a una imagen ee.Image
+
+//extract water from NDVI
+var water = ndvi.lte(0);
+
+//Para mejorar la visualización se utilizará la paleta de colores extraída del catálogo
+//de datos de GEE aplicable también a imágenes LAnd Sat
+var ndvipar = {
+  min: 0.0,
+  max: 1.0,
+  palette: [
+    'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718', '74A901',
+    '66A000', '529400', '3E8601', '207401', '056201', '004C00', '023B01',
+    '012E01', '011D01', '011301'
+  ],
+};
+
+//Visualización de imagen Sentinel "Original" y "Corregida"
+var visualization = {
+  min: 0.0,
+  max: 0.3,
+  bands: ['B4', 'B3', 'B2'],
+};
+
+//Visualización de las Posibles zonas de deslizamiento en base a un ndvi bajo
+var ndvizones = {min: 0.4, max: 0.6, palette: ['red', 'green', 'white']};
+
+/*
+Export.image.toAsset({
+  image: dataset_filtrada_median_clip,
+  description: 'imagen_sentinel',
+  assetId: 'im_senti',
+  scale: 10,
+  region: AOI
+//________________________________________________________________________________
+//________________________________________________________________________________
+*/
+
+
+
+
+//Parte II, Clasificación de la imagen
+//_________________________________________________________________________________
+//_________________________________________________________________________________
+//Clasificación no supervisada
+
+//Código original de la clasificación no supervisada adaptado a una imagen sentinel
+// Load a pre-computed Landsat composite for input.
+//var input = ee.Image('LANDSAT/LE7_TOA_1YEAR/2001');
+
+// Define a region in which to generate a sample of the input.
+//var region = ee.Geometry.Rectangle(29.7, 30, 32.5, 31.7);
+
+//Visualización de imagen Sentinel
+var visualization_trueColor = {
+  min: 0.0,
+  max: 0.3,
+  bands: ['B4', 'B3', 'B2'],
+};
+
+var visualization_falseColor = {
+  min: 0.0,
+  max: 0.3,
+  bands: ['B8', 'B3', 'B2'],
+};
+
+var trueColor = image_sentinel.select(['B4', 'B3', 'B2']);
+var a_clasificar = image_sentinel.select(['B8','B4', 'B3', 'B2']);
+
+// Display the sample region.
+Map.setCenter(-89.0339, 13.7237, 12);
+Map.addLayer(ee.Image().paint(AOI, 0, 2), {}, 'AOI');
+
+// Make the training dataset.
+var training = a_clasificar.sample({
+  region: AOI,
+  scale: 10,
+  numPixels: 10000
+});
+
+// Instantiate the clusterer and train it.
+var clusterer = ee.Clusterer.wekaKMeans(10).train(training);
+
+// Cluster the input using the trained clusterer.
+var result = a_clasificar.cluster(clusterer);
+
+// Display the clusters with random colors.
+Map.addLayer(trueColor, visualization_trueColor, 'trueColor');
+Map.addLayer(a_clasificar, visualization_falseColor, 'a_clasificar');
+Map.addLayer(result.randomVisualizer(), {}, 'clusters');
+
+//___________________________________________________________________________________
+//___________________________________________________________________________________
+
+
+
+
+
+//Parte III, Visualización de las capas
+//____________________________________________________________________________________
+//____________________________________________________________________________________
+Map.setCenter(-89.0339, 13.7237, 12);
+
+//Map.addLayer(dataset.mean(), visualization, 'RGB');
+
+Map.addLayer(dataset_median_clip, visualization, 'Original');
+Map.addLayer(dataset_filtrada_median_clip, visualization, 'Corregida');
+Map.addLayer(ndvi, ndvipar, 'ndvi');
+Map.addLayer(water, {palette: ['white', 'blue']}, 'water');
+Map.addLayer(ndvi, ndvizones, 'Posible landslide zones');
+
+//_____________________________________________________________________________________
+//_____________________________________________________________________________________

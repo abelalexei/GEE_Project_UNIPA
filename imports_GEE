@@ -1,1 +1,20 @@
-
+var AOI = 
+    /* color: #d63000 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-89.07010686395093, 13.750376226473056],
+          [-89.07010686395093, 13.695511805297132],
+          [-88.99869573113843, 13.695511805297132],
+          [-88.99869573113843, 13.750376226473056]]], null, false),
+    imageVisParam = {"opacity":1,"bands":["B4"],"palette":["df923d","f1b555","fcd163","99b718","74a901"]},
+    imageVisParam2 = {"opacity":1,"bands":["B4","B4","B4"],"gamma":1.0510000000000002},
+    imageVisParam3 = {"opacity":1,"bands":["B4"],"max":0.5,"palette":["ffffff","ce7e45","df923d","f1b555","fcd163","99b718","74a901","66a000","529400","3e8601","207401","056201","004c00","023b01","012e01","011d01","011301"]},
+    imageVisParam4 = {"opacity":1,"bands":["B8","B8","B8"],"min":0.4,"max":0.6,"gamma":1},
+    image_sentinel = ee.Image("projects/ee-abelargueta/assets/im_senti"),
+    imageVisParam6 = {"opacity":1,"bands":["cluster"],"palette":["ff6308","daff0e","69ff0c","0ef4ff","0eb1ff","0a4aff","9a14ff","e13bff","ff9f5a"]},
+    imageVisParam8 = {"opacity":1,"bands":["viz-red","viz-green","viz-blue"],"min":26.3,"max":228.7,"gamma":1};

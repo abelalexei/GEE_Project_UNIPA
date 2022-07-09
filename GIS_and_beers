@@ -1,0 +1,70 @@
+//IMAGENES SENTINEL2 Y LANDSAT8 SIN NUBES
+//Más info: http://www.gisandbeers.com/generar-imagenes-satelite-sin-nubes/
+
+//Selección de banda de control BQA para identificar pixels de nubes
+function MascaraNubesL(image) {
+  var qa = image.select('BQA');
+
+// El bit4 con valor 1 identifica pixels de nubes que podemos excluir de la imagen
+  var RecorteMascaraL = 1 << 4;
+  var MascaraL = qa.bitwiseAnd(RecorteMascaraL).eq(0);
+  return image.updateMask(MascaraL);}
+
+//LLamamos a la colección Landsat 8 y filtramos por fechas y coberturas de nubes para ajustar parámetros
+var Landsat = ee.ImageCollection('LANDSAT/LC08/C01/T1_RT') //Llamada a la colección Landsat 8
+  .filterDate('2018-01-11', '2018-12-30') //Filtro de fechas de trabajo
+  .filter(ee.Filter.lt('CLOUD_COVER', 20))//Filtro de cobertura de nubes
+  .filterBounds (geometry) //Límites espaciales dibujados sobre el visor de GEE
+  .map(MascaraNubesL);
+
+//Representamos la composición RGB a color natural o falso color. Por ejemplo, un RGB 754
+//Obtenemos una única image fruto de la combinación de píxels disponibles con ausencia de nube
+var rgbVis = {
+  min: 5000.0,
+  max: 30000.0,
+  bands: ['B7', 'B5', 'B2'],};
+Map.addLayer(Landsat.median(), rgbVis, 'LandsatCloudless');
+
+//Exportamos la imagen incorporando las bandas que queramos en el GeoTIF y asignamos resolución de salida
+Export.image.toDrive({
+  image: Landsat.select("B7", "B5", "B2"), //Reseñar las bandas a exportar (todas o las representadas)
+  description: 'LandsatCLOUDLESS', //Nombre de archivo de salida a exportar en Google Drive
+  scale: 30,}); //Resolucion de pixel de salida
+  
+  
+  
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//Repetimos el proceso con Sentinel 2 acediendo a la banda QA60
+function MascaraNubesS(image) {
+  var qa = image.select('QA60');
+
+//Excluimos los pixel identificados como nubes y cirros de la imagen
+  var RecorteNubesMascaraS = 1 << 10;
+  var RecorteCirrosMascaraS = 1 << 11;
+  var MascaraS = qa.bitwiseAnd(RecorteNubesMascaraS).eq(0)
+      .and(qa.bitwiseAnd(RecorteCirrosMascaraS).eq(0));
+  return image.updateMask(MascaraS);}
+
+//Realizamos una llamada a la colección de imágenes Sentinel y filtramos por fecha y cobertura de nubes
+var Sentinel = ee.ImageCollection('COPERNICUS/S2')
+   .filterDate('2018-01-01', '2018-12-30')
+   .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+   .filterBounds (geometry)
+   .map(MascaraNubesS);
+
+//Representamos la composición RGB a color natural o falso color. Por ejemplo, un RGB 432
+//Obtenemos una única image fruto de la combinación de píxels disponibles con ausencia de nube
+var rgbVis = {
+  min: 0.0,
+  max: 5000.0,
+  bands: ['B4', 'B3', 'B2'],};
+Map.addLayer(Sentinel.median(), rgbVis, 'SentinelCloudless');
+
+//Exportamos la imagen incorporando las bandas que queramos en el GeoTIF y asignamos resolución de salida
+Export.image.toDrive({
+  image: Sentinel.select("B4", "B3", "B2"), //Bandas a exportar (todas o las representadas)
+  description: 'SentinelCLOUDLESS', //Nombre de archivo de salida a exportar en Google Drive
+  scale: 10,}); //Resolucion de pixel de salida
